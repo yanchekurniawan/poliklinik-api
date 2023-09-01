@@ -5,15 +5,10 @@ from typing import List
 class PoliBase(BaseModel):
     nama_poli: str
 
-    class Config:
-        orm_mode = True
-        from_attributes=True
-
 class TindakanBase(BaseModel):
     tindakan: str
 
     class Config:
-        orm_mode = True
         from_attributes=True
 
 class DetailPoliBase(BaseModel):
@@ -33,16 +28,9 @@ class DetailPoliBase(BaseModel):
     # def pony_set_to_list(cls, values):
     #     return [v.to_dict() for v in values]
     
-    class Config:
-        orm_mode = True
-        from_attributes=True
 
 class RoleBase(BaseModel):
     role: str
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
 
 class UsersBase(BaseModel):
     username: str
@@ -50,10 +38,6 @@ class UsersBase(BaseModel):
     created_at: datetime
     role_id: int
     # role_id: RoleBase
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
         
 class PasienBase(BaseModel):
     nik: str
@@ -62,10 +46,6 @@ class PasienBase(BaseModel):
     umur: int
     tinggi_badan: float
     berat_badan: float
-    
-    class Config:
-        orm_mode = True
-        from_attributes = True
 
 class DokterBase(BaseModel):
     id: str
@@ -77,10 +57,6 @@ class DokterBase(BaseModel):
     poli_id: int
     # user_id: UsersBase
     # poli_id: PoliBase
-    
-    class Config:
-        orm_mode = True
-        from_attributes = True
 
 class ApotekerBase(BaseModel):
     id: str
@@ -90,29 +66,31 @@ class ApotekerBase(BaseModel):
     telepon: str
     user_id: int
 
-class RekamMedisBase(BaseModel):
-    id: str
-    # pasien_id: PasienBase
-    pasien_id: str
-    tanggal_berobat: date
-
 class DetailRekamMedisBase(BaseModel):
-    rekam_medis_id: str
+    # rekam_medis_id: str
     dokter_id: str
     tindakan_id: int
     # rekam_medis_id: RekamMedisBase
     # dokter_id: DokterBase
     # tindakan_id: TindakanBase
+
+class RekamMedisBase(BaseModel):
+    id: str
+    # pasien_id: PasienBase
+    pasien_id: str
+    tanggal_berobat: date
+    detail: List[DetailRekamMedisBase]
     resep: str
-    jumlah_obat: int
 
 class DetailResepBase(BaseModel):
-    rekam_medis_id: str
-    dokter_id: str
-    tindakan_id: int
     obat_id: str
+    jumlah_obat: int
     dosis: int
     catatan: str
+
+class CreateDetailResepBase(BaseModel):
+    rekam_medis_id: str
+    daftar_obat: List[DetailResepBase]
 
 class KasirBase(BaseModel):
     id: str
@@ -124,8 +102,13 @@ class KasirBase(BaseModel):
 
 class TransaksiBase(BaseModel):
     id: str
-    rekam_medis_id: str
     kasir_id: str
     biaya_dokter: float
     # total_biaya: float
     # created_at: datetime
+
+class Obat(BaseModel):
+    id: str
+    nama_obat: str
+    stok: int
+    harga: float

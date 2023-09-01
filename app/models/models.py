@@ -81,6 +81,7 @@ class RekamMedis(database.db.Entity):
     id = PrimaryKey(str)
     pasien_id = Required(Pasien)
     tanggal_berobat = Required(date)
+    resep = Required(str)
 
     detail_rekam_medis = Set('DetailRekamMedis')
     transaksi = Set("Transaksi")
@@ -90,17 +91,23 @@ class DetailRekamMedis(database.db.Entity):
     rekam_medis_id = Required(RekamMedis)
     dokter_id = Required(Dokter)
     tindakan_id = Required(Tindakan)
-    resep = Required(str)
-    jumlah_obat = Required(int)
     PrimaryKey(rekam_medis_id, dokter_id, tindakan_id)
+
+class Obat(database.db.Entity):
+    _table_ = "obat"
+    id = PrimaryKey(str)
+    nama_obat = Required(str)
+    stok = Required(int)
+    harga = Required(float)
+
+    detail_resep = Set('DetailResep')
 
 class DetailResep(database.db.Entity):
     _table_ = "detail_resep"
     id = PrimaryKey(int, auto=True)
     rekam_medis_id = Required(str)
-    dokter_id = Required(str)
-    tindakan_id = Required(int)
-    obat_id = Required(str)
+    obat_id = Required(Obat)
+    jumlah_obat = Required(int)
     dosis = Required(int)
     catatan = Required(str)
 
@@ -123,3 +130,4 @@ class Transaksi(database.db.Entity):
     biaya_dokter = Required(float)
     total_biaya = Required(float)
     created_at = Required(datetime)
+
