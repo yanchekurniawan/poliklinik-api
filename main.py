@@ -11,30 +11,30 @@ app = FastAPI()
 database.db.bind(provider='postgres', user='postgres', password='postgres', host='localhost', database='db_poli')
 database.db.generate_mapping(create_tables=True)
 
-@app.get('/')
-def read_root():
-    return { 
-        "msg": "Hello World"
-    }
+# @app.get('/')
+# def read_root():
+#     return { 
+#         "msg": "Hello World"
+#     }
 
-@app.get('/tindakan/')
-async def get_tindakan():
-    with db_session:
-        tindakan = models.Tindakan.select()
-        result = [schemas.TindakanBase.from_orm(t) for t in tindakan]
-    return result
+# @app.get('/tindakan/')
+# async def get_tindakan():
+#     with db_session:
+#         tindakan = models.Tindakan.select()
+#         result = [schemas.TindakanBase.from_orm(t) for t in tindakan]
+#     return result
 
-@app.post('/tindakan/')
-async def create_tindakan(tindakan: schemas.TindakanBase):
-    with db_session:
-        res = models.Tindakan(tindakan=tindakan.tindakan)
+# @app.post('/tindakan/')
+# async def create_tindakan(tindakan: schemas.TindakanBase):
+#     with db_session:
+#         res = models.Tindakan(tindakan=tindakan.tindakan)
 
-@app.get('/detail-poli/')
-async def get_detail_poli():
-    with db_session:
-        get_detail_poli = 'select p.nama_poli, t.tindakan from poli as p inner join detail_poli as dp on p.id = dp.poli_id inner join tindakan as t on t.id = dp.tindakan_id'
-        result = execute_query(get_detail_poli)
-    return result
+# @app.get('/detail-poli/')
+# async def get_detail_poli():
+#     with db_session:
+#         get_detail_poli = 'select p.nama_poli, t.tindakan from poli as p inner join detail_poli as dp on p.id = dp.poli_id inner join tindakan as t on t.id = dp.tindakan_id'
+#         result = execute_query(get_detail_poli)
+#     return result
 
 @app.post('/tindakan-dokter/')
 async def create_tindakan_dokter(rekam_medis: schemas.RekamMedisBase):
@@ -148,33 +148,33 @@ async def get_tindakan_dokter(rekam_medis_id: str):
         f" inner join obat as o on dr.obat_id = o.id where rm.id = '{rekam_medis_id}'"
         get_obat = execute_query(query, 'all')
 
-    detail_tindakan = []
-    daftar_obat = []
-    for i in range(len(get_tindakan)):
-        detail_tindakan.append({
-            'rekam_medis_id': get_tindakan[i][0],
-            'nik': get_tindakan[i][1],
-            'nama_pasien': get_tindakan[i][2],
-            'tanggal_berobat': get_tindakan[i][3],
-            'nama_dokter': get_tindakan[i][4],
-            'nama_poli': get_tindakan[i][5],
-            'tindakan': get_tindakan[i][6]
-        })
-    
-    for i in range(len(get_obat)):
-        daftar_obat.append({
-            'nama_obat': get_obat[i][0],
-            'jumlah_obat': get_obat[i][1],
-            'harga': get_obat[i][2]
-        })
+        detail_tindakan = []
+        daftar_obat = []
+        for i in range(len(get_tindakan)):
+            detail_tindakan.append({
+                'rekam_medis_id': get_tindakan[i][0],
+                'nik': get_tindakan[i][1],
+                'nama_pasien': get_tindakan[i][2],
+                'tanggal_berobat': get_tindakan[i][3],
+                'nama_dokter': get_tindakan[i][4],
+                'nama_poli': get_tindakan[i][5],
+                'tindakan': get_tindakan[i][6]
+            })
+        
+        for i in range(len(get_obat)):
+            daftar_obat.append({
+                'nama_obat': get_obat[i][0],
+                'jumlah_obat': get_obat[i][1],
+                'harga': get_obat[i][2]
+            })
 
 
-    return response_models.GetTindakanDokterResponseModel(
-        data= {
-            'detail_tindakan': detail_tindakan,
-            'daftar_obat': daftar_obat
-        }
-    )
+        return response_models.GetTindakanDokterResponseModel(
+            data= {
+                'detail_tindakan': detail_tindakan,
+                'daftar_obat': daftar_obat
+            }
+        )
 
 @app.post('/transaksi/')
 async def create_transaksi(rekam_medis_id: str, transaksi: schemas.TransaksiBase):
@@ -201,15 +201,15 @@ async def create_transaksi(rekam_medis_id: str, transaksi: schemas.TransaksiBase
         total = transaksi.biaya_dokter + sub_total
         transaksi_res = models.Transaksi(id=transaksi.id, rekam_medis_id = rekam_medis_id, kasir_id=transaksi.kasir_id, biaya_dokter=transaksi.biaya_dokter, total_biaya=total, created_at=datetime.now())
 
-    return response_models.CreateTransaksiResponseModel(
-        data= {
-            'id': transaksi.id,
-            'rekam_medis_id': rekam_medis_id,
-            'kasir_id': transaksi.kasir_id,
-            'biaya_dokter': transaksi.biaya_dokter,
-            'total_biaya': total
-        }
-    )
+        return response_models.CreateTransaksiResponseModel(
+            data= {
+                'id': transaksi.id,
+                'rekam_medis_id': rekam_medis_id,
+                'kasir_id': transaksi.kasir_id,
+                'biaya_dokter': transaksi.biaya_dokter,
+                'total_biaya': total
+            }
+        )
 
 def execute_query(query, fetch):
     if fetch == 'all':
