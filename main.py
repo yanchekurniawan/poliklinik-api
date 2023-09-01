@@ -1,9 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from app.utils import database
 from app.models import models
 from app.schemas import schemas
 from pony.orm import *
-from datetime import date, datetime
+from datetime import datetime
 from app.api_models import response_models
 
 app = FastAPI()
@@ -11,34 +11,28 @@ app = FastAPI()
 database.db.bind(provider='postgres', user='postgres', password='postgres', host='localhost', database='db_poli')
 database.db.generate_mapping(create_tables=True)
 
-# @app.get('/')
-# def read_root():
-#     return { 
-#         "msg": "Hello World"
-#     }
+@app.post('/')
+async def user_login(user: schemas.UsersBase):
+    with db_session:
+        query = f"select * from users where username = '{user.username}' and password = '{user.password}'"
+        result = execute_query(query, "one")
+        
+        if not result:
+            raise HTTPException(400, detail='Username / Password Salah')
+        
+        return {
+            'role_id': result[4],
+            'message': 'Login Success'
+        }
 
-# @app.get('/tindakan/')
-# async def get_tindakan():
-#     with db_session:
-#         tindakan = models.Tindakan.select()
-#         result = [schemas.TindakanBase.from_orm(t) for t in tindakan]
-#     return result
-
-# @app.post('/tindakan/')
-# async def create_tindakan(tindakan: schemas.TindakanBase):
-#     with db_session:
-#         res = models.Tindakan(tindakan=tindakan.tindakan)
-
-# @app.get('/detail-poli/')
-# async def get_detail_poli():
-#     with db_session:
-#         get_detail_poli = 'select p.nama_poli, t.tindakan from poli as p inner join detail_poli as dp on p.id = dp.poli_id inner join tindakan as t on t.id = dp.tindakan_id'
-#         result = execute_query(get_detail_poli)
-#     return result
 
 @app.post('/tindakan-dokter/')
-async def create_tindakan_dokter(rekam_medis: schemas.RekamMedisBase):
+async def create_tindakan_dokter(rekam_medis: schemas.RekamMedisBase, user_role: int = Header(0, alias='X-User-Role')):
+    """ role cek """
+    role_validate(user_role, 1)
+
     with db_session:
+
         """ cek pasien id """
         query = f"select * from pasien where nik = '{rekam_medis.pasien_id}'"
         pasien_id = execute_query(query, 'one')
@@ -74,9 +68,13 @@ async def create_tindakan_dokter(rekam_medis: schemas.RekamMedisBase):
         )
 
 """ Apoteker - Lihat Resep Dokter """
-@app.get('/resep-obat/')
-async def get_resep_obat(rekam_medis_id: str):
+@app.get('/resep-obat/' )
+async def get_resep_obat(rekam_medis_id: str, user_role: int = Header(0, alias='X-User-Role')):
+    """ role cek """
+    role_validate(user_role, 2)
+
     with db_session:
+
         """ cek rekam medis id """
         query = f"select * from rekam_medis where id = '{rekam_medis_id}'"
         get_rekam_medis = execute_query(query, 'one')
@@ -102,8 +100,12 @@ async def get_resep_obat(rekam_medis_id: str):
 
 """ Apoteker - Input Obat """
 @app.post('/daftar-obat/')
-async def create_daftar_obat(daftar_obat: schemas.CreateDetailResepBase):
+async def create_daftar_obat(daftar_obat: schemas.CreateDetailResepBase, user_role: int = Header(0, alias='X-User-Role')):
+    """ role cek """
+    role_validate(user_role, 2)
+
     with db_session:
+
         """ cek rekam medis id """
         query = f"select * from rekam_medis where id = '{daftar_obat.rekam_medis_id}'"
         rekam_medis_id = execute_query(query, 'one')
@@ -129,7 +131,10 @@ async def create_daftar_obat(daftar_obat: schemas.CreateDetailResepBase):
 
 """ Kasir - Lihat Tindakan dan Resep """
 @app.get('/tindakan-dokter/')
-async def get_tindakan_dokter(rekam_medis_id: str):
+async def get_tindakan_dokter(rekam_medis_id: str, user_role: int = Header(0, alias='X-User-Role')):
+    """ role cek """
+    role_validate(user_role, 3)
+
     with db_session:
         """ get tindakan """
         query = "select p.nik, rm.id, p.nama_pasien, rm.tanggal_berobat, d.nama_dokter, pl.nama_poli, t.tindakan"\
@@ -176,8 +181,12 @@ async def get_tindakan_dokter(rekam_medis_id: str):
             }
         )
 
+""" Kasir - Create Transaksi """
 @app.post('/transaksi/')
-async def create_transaksi(rekam_medis_id: str, transaksi: schemas.TransaksiBase):
+async def create_transaksi(rekam_medis_id: str, transaksi: schemas.TransaksiBase, user_role: int = Header(0, alias='X-User-Role')):
+    """ role cek """
+    role_validate(user_role, 3)
+
     with db_session:
         """ cek rekam medis id """
         query = f"select * from rekam_medis where id = '{rekam_medis_id}'"
@@ -222,3 +231,27 @@ def execute_query(query, fetch):
         cur = con.cursor()
         cur.execute(query)
         return cur.fetchone()
+
+def role_validate(user_role, role_id):
+    if user_role == 0 or user_role != role_id :
+            raise HTTPException(401, detail='Andak tidak memiliki hak akses')
+
+
+# @app.get('/tindakan/')
+# async def get_tindakan():
+#     with db_session:
+#         tindakan = models.Tindakan.select()
+#         result = [schemas.TindakanBase.from_orm(t) for t in tindakan]
+#     return result
+
+# @app.post('/tindakan/')
+# async def create_tindakan(tindakan: schemas.TindakanBase):
+#     with db_session:
+#         res = models.Tindakan(tindakan=tindakan.tindakan)
+
+# @app.get('/detail-poli/')
+# async def get_detail_poli():
+#     with db_session:
+#         get_detail_poli = 'select p.nama_poli, t.tindakan from poli as p inner join detail_poli as dp on p.id = dp.poli_id inner join tindakan as t on t.id = dp.tindakan_id'
+#         result = execute_query(get_detail_poli)
+#     return result

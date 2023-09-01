@@ -35,9 +35,11 @@ class RoleBase(BaseModel):
 class UsersBase(BaseModel):
     username: str
     password: str
-    created_at: datetime
-    role_id: int
     # role_id: RoleBase
+
+class CreateUserBase(BaseModel):
+    users: UsersBase
+    role_id: int
         
 class PasienBase(BaseModel):
     nik: str
